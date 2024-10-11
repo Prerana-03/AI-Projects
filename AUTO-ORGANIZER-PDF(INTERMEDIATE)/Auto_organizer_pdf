@@ -1,0 +1,33 @@
+import PyMuPDF
+from sentence_transformers import SentenceTransformer
+import pandas as pd
+from sklearn.cluster import KMeans
+
+# Load embedding model
+model = SentenceTransformer("all-MiniLM-L6-v2")
+
+# Function to extract abstract from PDF
+def extract_pdf_text(pdf_path):
+    doc = fitz.open(pdf_path)
+    abstract = ""
+    for page in doc:
+        abstract += page.get_text("text")
+    return abstract
+
+# Example abstracts
+pdf_files = ["paper1.pdf", "paper2.pdf"]
+abstract_list = [extract_pdf_text(file) for file in pdf_files]
+
+# Get text embeddings
+embeddings = model.encode(abstract_list)
+
+# Clustering
+num_clusters = 3
+kmeans = KMeans(n_clusters=num_clusters)
+kmeans.fit(embeddings)
+
+# Organize papers into clusters
+df = pd.DataFrame({'file': pdf_files, 'cluster': kmeans.labels_})
+for cluster_id in range(num_clusters):
+    cluster_files = df[df['cluster'] == cluster_id]['file'].tolist()
+    print(f"Cluster {cluster_id}: {cluster_files}")

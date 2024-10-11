@@ -1,0 +1,36 @@
+import fitz  # PyMuPDF
+import pandas as pd
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Chunk text extraction from PDF
+def extract_text_chunks(pdf_path, chunk_size=1000, overlap_size=200):
+    doc = fitz.open(pdf_path)
+    chunks = []
+    for page_num in range(len(doc)):
+        page = doc[page_num]
+        text = page.get_text()
+        start = 0
+        while start < len(text):
+            end = start + chunk_size
+            chunks.append((page_num + 1, text[start:end]))
+            start += chunk_size - overlap_size
+    return chunks
+
+# Load embedding model
+model = SentenceTransformer("nomic-ai/nomic-embed-text-v1.5")
+
+# Extract and embed chunks
+pdf_chunks = extract_text_chunks("your_file.pdf")
+chunk_texts = [chunk[1] for chunk in pdf_chunks]
+chunk_embeddings = model.encode(chunk_texts)
+
+# Query embedding and search
+query = "user's search query"
+query_embedding = model.encode([query])
+similarities = cosine_similarity(query_embedding, chunk_embeddings)
+
+# Find top k results
+top_k_indices = similarities.argsort()[0][-5:]
+top_k_chunks = [pdf_chunks[i] for i in top_k_indices]
+print("Top matching chunks:", top_k_chunks)

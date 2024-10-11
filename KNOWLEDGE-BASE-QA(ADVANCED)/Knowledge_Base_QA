@@ -1,0 +1,20 @@
+import fitz  # PyMuPDF
+import openai
+import gradio as gr
+
+openai.api_key = "your_openai_api_key"
+
+# Function to generate response from OpenAI
+def generate_response(message, history):
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": message}
+        ]
+    )
+    return response.choices[0].message["content"]
+
+# Gradio chat interface
+demo = gr.ChatInterface(fn=generate_response, title="Knowledge Base QA")
+demo.launch()
